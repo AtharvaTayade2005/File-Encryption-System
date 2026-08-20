@@ -1,136 +1,270 @@
-/* Modern Glassmorphism, Dark Mode, and Cryptographic Animations */
+/* ==========================================================================
+   ZeroVault — Bespoke Industrial Cryptography Design System
+   Human-Crafted Aesthetic: Swiss Technical Typography meets High-Security Vault
+   ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap');
 
 :root {
-    --bg-main: #0B0F19;
-    --bg-card: rgba(17, 24, 39, 0.75);
-    --border-card: rgba(255, 255, 255, 0.08);
-    --accent-glow: rgba(99, 102, 241, 0.15);
-    --primary: #6366F1;
-    --primary-hover: #4F46E5;
-    --emerald-glow: rgba(16, 185, 129, 0.15);
+    --bg-canvas: #080A0F;
+    --bg-surface: #0E121B;
+    --bg-elevated: #141926;
+    --bg-card: rgba(16, 21, 32, 0.75);
+    
+    --border-subtle: rgba(255, 255, 255, 0.07);
+    --border-strong: rgba(255, 255, 255, 0.15);
+    --border-accent: rgba(245, 158, 11, 0.4);
+    
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --text-muted: #64748B;
+    
+    --amber-500: #F59E0B;
+    --amber-400: #FBBF24;
+    --amber-glow: rgba(245, 158, 11, 0.18);
+    
+    --cyan-500: #06B6D4;
+    --cyan-400: #22D3EE;
+    --cyan-glow: rgba(6, 182, 212, 0.18);
+    
+    --emerald-500: #10B981;
+    --emerald-400: #34D399;
+    --emerald-glow: rgba(16, 185, 129, 0.18);
+    
+    --rose-500: #F43F5E;
+    
+    --font-heading: 'Syne', sans-serif;
+    --font-tech: 'Space Grotesk', sans-serif;
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
 }
 
+/* Base Document */
 * {
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 body {
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    background-color: var(--bg-main);
-    color: #F3F4F6;
+    font-family: var(--font-sans);
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
     min-height: 100vh;
     overflow-x: hidden;
+    background-image: 
+        radial-gradient(circle at 50% 0%, rgba(6, 182, 212, 0.04) 0%, transparent 60%),
+        radial-gradient(circle at 100% 100%, rgba(245, 158, 11, 0.03) 0%, transparent 50%),
+        linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
 }
 
-.font-mono {
-    font-family: 'JetBrains Mono', monospace;
-}
+/* Typography Helpers */
+.font-display { font-family: var(--font-heading); }
+.font-tech { font-family: var(--font-tech); }
+.font-mono { font-family: var(--font-mono); }
 
-/* Glassmorphism Card Style */
-.glass-panel {
+/* Technical Panels */
+.vault-panel {
     background: var(--bg-card);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--border-card);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border-subtle);
+    box-shadow: 
+        0 1px 2px 0 rgba(0, 0, 0, 0.4),
+        0 8px 24px -4px rgba(0, 0, 0, 0.6);
+    position: relative;
 }
 
-.glass-input {
-    background: rgba(15, 23, 42, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #F8FAFC;
-    transition: all 0.2s ease-in-out;
+.vault-panel::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
 }
 
-.glass-input:focus {
-    border-color: #6366F1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+/* Technical Corner Markings */
+.technical-corner {
+    position: relative;
+}
+.technical-corner::after {
+    content: "+";
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    opacity: 0.5;
+}
+
+/* Custom Inputs */
+.vault-input {
+    background: rgba(10, 14, 22, 0.85);
+    border: 1px solid var(--border-strong);
+    color: var(--text-primary);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    font-family: var(--font-sans);
+}
+
+.vault-input:focus {
+    border-color: var(--amber-400);
+    box-shadow: 0 0 0 3px var(--amber-glow);
     outline: none;
+    background: rgba(14, 18, 28, 0.95);
 }
 
-/* Glowing Background Badges */
-.glow-primary {
-    box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+/* Custom Buttons with Tactile Depth */
+.btn-tactile-primary {
+    background: linear-gradient(180deg, #F59E0B 0%, #D97706 100%);
+    color: #0F172A;
+    font-weight: 700;
+    font-family: var(--font-tech);
+    letter-spacing: -0.01em;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 
+        0 1px 0 0 rgba(255, 255, 255, 0.3) inset,
+        0 4px 12px rgba(217, 119, 6, 0.35);
+    transition: all 0.15s ease-out;
 }
 
-.glow-emerald {
-    box-shadow: 0 0 20px rgba(16, 185, 129, 0.35);
+.btn-tactile-primary:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 
+        0 1px 0 0 rgba(255, 255, 255, 0.4) inset,
+        0 6px 20px rgba(245, 158, 11, 0.45);
+    filter: brightness(1.05);
 }
 
-.glow-rose {
-    box-shadow: 0 0 20px rgba(244, 63, 94, 0.35);
+.btn-tactile-primary:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
 }
+
+.btn-tactile-cyan {
+    background: linear-gradient(180deg, #06B6D4 0%, #0891B2 100%);
+    color: #04101A;
+    font-weight: 700;
+    font-family: var(--font-tech);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
+    transition: all 0.15s ease-out;
+}
+
+.btn-tactile-cyan:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(6, 182, 212, 0.4);
+    filter: brightness(1.08);
+}
+
+.btn-tactile-secondary {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    transition: all 0.15s ease-out;
+}
+
+.btn-tactile-secondary:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+    border-color: var(--border-strong);
+}
+
+/* Status Indicator Beacons */
+.beacon-dot {
+    position: relative;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.beacon-dot::after {
+    content: "";
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    background: inherit;
+    opacity: 0.4;
+    animation: beaconPulse 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes beaconPulse {
+    0%, 100% { transform: scale(1); opacity: 0.4; }
+    50% { transform: scale(2); opacity: 0; }
+}
+
+/* Drag & Drop Zone */
+.vault-dropzone {
+    border: 2px dashed rgba(255, 255, 255, 0.12);
+    background: rgba(14, 18, 28, 0.4);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vault-dropzone:hover {
+    border-color: var(--amber-400);
+    background: rgba(245, 158, 11, 0.03);
+}
+
+.dropzone-active {
+    border-color: var(--cyan-400) !important;
+    background: rgba(6, 182, 212, 0.08) !important;
+    transform: scale(1.01);
+    box-shadow: 0 0 30px rgba(6, 182, 212, 0.15);
+}
+
+/* Terminal Log */
+.terminal-container {
+    background: #05070B;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    font-family: var(--font-mono);
+}
+
+.terminal-header {
+    background: #090C12;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.terminal-line-success { color: #34D399; }
+.terminal-line-info { color: #38BDF8; }
+.terminal-line-warn { color: #FBBF24; }
+.terminal-line-crypto { color: #E879F9; }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
 }
-
 ::-webkit-scrollbar-track {
-    background: rgba(15, 23, 42, 0.6);
+    background: #090C12;
 }
-
 ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 3px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.25);
 }
 
-/* Pulse Glow Animation */
-@keyframes subtlePulse {
-    0%, 100% {
-        opacity: 0.8;
-        transform: scale(1);
-    }
-    50% {
-        opacity: 1;
-        transform: scale(1.02);
-    }
+/* Selection */
+::selection {
+    background: var(--amber-500);
+    color: #090B10;
 }
 
-.animate-subtle-pulse {
-    animation: subtlePulse 3s infinite ease-in-out;
+/* Toast Notifications */
+.vault-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 100;
+    animation: toastSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Dropzone Active Animation */
-.dropzone-active {
-    border-color: #6366F1 !important;
-    background: rgba(99, 102, 241, 0.08) !important;
-    transform: scale(1.01);
-}
-
-/* Terminal Log Styling */
-.terminal-window {
-    background: #030712;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.82rem;
-    color: #9CA3AF;
-}
-
-.terminal-line-success {
-    color: #34D399;
-}
-
-.terminal-line-info {
-    color: #60A5FA;
-}
-
-.terminal-line-warn {
-    color: #FBBF24;
-}
-
-.terminal-line-crypto {
-    color: #C084FC;
-}
-
-/* Transition utility */
-.transition-smooth {
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+@keyframes toastSlideUp {
+    from { opacity: 0; transform: translateY(12px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
 }
