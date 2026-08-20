@@ -164,12 +164,10 @@ class ZeroVaultApp {
             const btn = document.getElementById(`tab-btn-${t}`);
             const content = document.getElementById(`tab-content-${t}`);
             if (t === tab) {
-                btn?.classList.add("bg-amber-500", "text-slate-950", "shadow-md");
-                btn?.classList.remove("text-slate-400");
+                btn?.classList.add("tab-btn-active");
                 content?.classList.remove("hidden");
             } else {
-                btn?.classList.remove("bg-amber-500", "text-slate-950", "shadow-md");
-                btn?.classList.add("text-slate-400");
+                btn?.classList.remove("tab-btn-active");
                 content?.classList.add("hidden");
             }
         });
@@ -204,15 +202,15 @@ class ZeroVaultApp {
         const toggleBtn = document.getElementById("btn-toggle-auth-mode");
 
         if (this.authMode === "login") {
-            title.textContent = "Sign In to ZeroVault";
-            desc.textContent = "PBKDF2-SHA256 will derive your auth hash and decrypt your local keypair.";
-            submitBtn.textContent = "Sign In (Derive & Unlock)";
-            toggleBtn.textContent = "Don't have an account? Sign Up";
+            title.textContent = "Log in";
+            desc.textContent = "Your password never leaves your device — it's used locally to derive your encryption keys.";
+            submitBtn.textContent = "Log in";
+            toggleBtn.textContent = "Don't have an account? Sign up";
         } else {
-            title.textContent = "Create Zero-Knowledge Account";
-            desc.textContent = "Generates RSA-2048 keypair locally and encrypts private key with KEK.";
-            submitBtn.textContent = "Create Account & Generate Keys";
-            toggleBtn.textContent = "Already have an account? Sign In";
+            title.textContent = "Create your account";
+            desc.textContent = "We'll generate your encryption keys right here in your browser. Your password never leaves your device.";
+            submitBtn.textContent = "Create account";
+            toggleBtn.textContent = "Already have an account? Log in";
         }
     }
 
@@ -401,15 +399,23 @@ class ZeroVaultApp {
         const authNavButtons = document.getElementById("auth-nav-buttons");
         const navUsername = document.getElementById("nav-username");
 
+        const heroSection = document.getElementById("hero-section");
+        const dashboard = document.getElementById("view-dashboard");
+
         if (this.currentUser) {
             userPill?.classList.remove("hidden");
-            userPill?.classList.add("flex");
+            userPill?.style && (userPill.style.display = 'flex');
             authNavButtons?.classList.add("hidden");
             if (navUsername) navUsername.textContent = this.currentUser.username;
+            heroSection?.classList.add("hidden");
+            dashboard?.classList.remove("hidden");
         } else {
             userPill?.classList.add("hidden");
-            userPill?.classList.remove("flex");
+            userPill?.style && (userPill.style.display = 'none');
             authNavButtons?.classList.remove("hidden");
+            authNavButtons?.style && (authNavButtons.style.display = 'flex');
+            heroSection?.classList.remove("hidden");
+            dashboard?.classList.add("hidden");
         }
     }
 
@@ -432,11 +438,11 @@ class ZeroVaultApp {
 
         if (btn) {
             btn.disabled = false;
-            btn.classList.remove("bg-slate-800", "text-slate-500", "cursor-not-allowed");
-            btn.classList.add("btn-tactile-primary", "cursor-pointer");
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
             btn.innerHTML = `
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                <span>Seal & Transmit "${file.name}"</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span>Encrypt & upload "${file.name}"</span>
             `;
         }
     }
@@ -601,7 +607,7 @@ class ZeroVaultApp {
         } finally {
             if (btn) {
                 btn.disabled = false;
-                btn.innerHTML = `<span>Select File to Encrypt & Upload</span>`;
+                btn.innerHTML = `<span>Encrypt and Upload</span>`;
             }
         }
     }
@@ -612,10 +618,11 @@ class ZeroVaultApp {
         const btn = document.getElementById("btn-start-encrypt");
         if (btn) {
             btn.disabled = true;
-            btn.className = "w-full py-3.5 px-6 rounded-xl bg-slate-800 text-slate-500 font-tech font-bold text-sm shadow-xl flex items-center justify-center space-x-2 transition-all cursor-not-allowed";
+            btn.style.opacity = '0.4';
+            btn.style.cursor = 'not-allowed';
             btn.innerHTML = `
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                <span>Select File to Seal & Transmit</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span>Select a file first</span>
             `;
         }
     }
@@ -677,10 +684,9 @@ class ZeroVaultApp {
 
     async createFileRow(file, isShared = false) {
         const tr = document.createElement("tr");
-        tr.className = "hover:bg-white/[0.03] transition-colors border-b border-white/5";
 
         // Attempt local metadata decryption if we have private key in RAM
-        let displayName = "Encrypted Blob (" + file.file_id.substring(0, 8) + "...)";
+        let displayName = file.file_id.substring(0, 12) + "...";
         let displayMime = "Unknown";
         let isPwProtected = false;
 
@@ -703,37 +709,33 @@ class ZeroVaultApp {
         });
 
         const pwBadge = isPwProtected 
-            ? `<span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30 text-[10px] font-mono uppercase">Password Shield</span>`
-            : `<span class="px-2 py-0.5 rounded bg-white/5 text-slate-400 border border-white/10 text-[10px] font-mono">Standard</span>`;
+            ? `<span class="badge badge-amber">🔐 Password</span>`
+            : `<span class="badge badge-zinc">Standard</span>`;
 
         if (!isShared) {
             const sharesList = file.shared_with && file.shared_with.length > 0 
-                ? file.shared_with.map(u => `<span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 text-[10px] font-mono">${u}</span>`).join(" ")
-                : `<span class="text-[11px] text-slate-500 font-mono">Vault Only</span>`;
+                ? file.shared_with.map(u => `<span class="badge badge-purple">${u}</span>`).join(" ")
+                : `<span style="font-size: 12px; color: var(--text-muted);">Only you</span>`;
 
             tr.innerHTML = `
-                <td class="px-5 py-3.5 font-medium text-white flex items-center space-x-3">
-                    <div class="w-8 h-8 rounded-lg bg-slate-900 border border-white/10 flex items-center justify-center text-amber-400 shrink-0">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <td style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 32px; height: 32px; border-radius: 8px; background: var(--accent-muted); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
                     </div>
-                    <div class="truncate max-w-xs">
-                        <div class="font-tech font-bold text-slate-100 truncate">${displayName}</div>
-                        <div class="text-[10px] text-slate-500 font-mono">${file.file_id}</div>
+                    <div style="min-width: 0;">
+                        <div style="font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${displayName}</div>
+                        <div class="font-mono" style="font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${file.file_id}</div>
                     </div>
                 </td>
-                <td class="px-5 py-3.5 font-mono text-[11px] text-slate-400">${this.formatBytes(file.file_size)}</td>
-                <td class="px-5 py-3.5 text-[11px] font-tech text-slate-400">${dateFormatted}</td>
-                <td class="px-5 py-3.5">${pwBadge}</td>
-                <td class="px-5 py-3.5">${sharesList}</td>
-                <td class="px-5 py-3.5 text-right space-x-1.5 whitespace-nowrap">
-                    <button class="btn-share-modal px-2.5 py-1 rounded bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[11px] font-tech font-bold transition-all" title="Share with user or generate link">
-                        Share
-                    </button>
-                    <button class="btn-dl-file px-2.5 py-1 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-tech font-bold transition-all">
-                        Decrypt
-                    </button>
-                    <button class="btn-del-file px-2 py-1 rounded hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 text-xs transition-colors" title="Delete">
-                        <svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                <td class="font-mono" style="font-size: 13px; color: var(--text-secondary);">${this.formatBytes(file.file_size)}</td>
+                <td style="font-size: 13px; color: var(--text-muted);">${dateFormatted}</td>
+                <td>${pwBadge}</td>
+                <td>${sharesList}</td>
+                <td style="text-align: right; white-space: nowrap;">
+                    <button class="btn-share-modal btn btn-ghost btn-sm" style="font-size: 12px;">Share</button>
+                    <button class="btn-dl-file btn btn-sm" style="font-size: 12px; background: var(--accent-muted); color: #C4B5FD;">Download</button>
+                    <button class="btn-del-file btn btn-ghost btn-sm btn-danger" style="font-size: 12px; padding: 6px 8px;" title="Delete">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                     </button>
                 </td>
             `;
@@ -743,23 +745,21 @@ class ZeroVaultApp {
             tr.querySelector(".btn-del-file")?.addEventListener("click", () => this.deleteVaultFile(file.file_id));
         } else {
             tr.innerHTML = `
-                <td class="px-5 py-3.5 font-medium text-white flex items-center space-x-3">
-                    <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shrink-0">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                <td style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(34,197,94,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
                     </div>
-                    <div class="truncate max-w-xs">
-                        <div class="font-tech font-bold text-slate-100 truncate">${displayName}</div>
-                        <div class="text-[10px] text-slate-500 font-mono">${file.file_id}</div>
+                    <div style="min-width: 0;">
+                        <div style="font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${displayName}</div>
+                        <div class="font-mono" style="font-size: 11px; color: var(--text-muted);">${file.file_id}</div>
                     </div>
                 </td>
-                <td class="px-5 py-3.5 text-xs font-tech font-semibold text-cyan-400">${file.owner_username}</td>
-                <td class="px-5 py-3.5 font-mono text-[11px] text-slate-400">${this.formatBytes(file.file_size)}</td>
-                <td class="px-5 py-3.5">${pwBadge}</td>
-                <td class="px-5 py-3.5 text-[11px] font-tech text-slate-400">${dateFormatted}</td>
-                <td class="px-5 py-3.5 text-right">
-                    <button class="btn-dl-file px-3 py-1 rounded bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[11px] font-tech font-bold transition-all">
-                        Decrypt & Download
-                    </button>
+                <td style="font-size: 13px; font-weight: 500; color: var(--accent);">${file.owner_username}</td>
+                <td class="font-mono" style="font-size: 13px; color: var(--text-secondary);">${this.formatBytes(file.file_size)}</td>
+                <td>${pwBadge}</td>
+                <td style="font-size: 13px; color: var(--text-muted);">${dateFormatted}</td>
+                <td style="text-align: right;">
+                    <button class="btn-dl-file btn btn-sm" style="font-size: 12px; background: var(--accent-muted); color: #C4B5FD;">Download</button>
                 </td>
             `;
 

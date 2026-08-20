@@ -1,476 +1,415 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZeroVault — Blind Cryptographic File Storage</title>
-    <meta name="description" content="Industrial zero-knowledge client-side encrypted vault. Web Crypto API, AES-256-GCM, PBKDF2-SHA256, RSA-OAEP.">
-    
-    <!-- Tailwind CSS for Grid Utilities -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        amber: { 500: '#F59E0B', 400: '#FBBF24', 600: '#D97706' },
-                        cyan: { 500: '#06B6D4', 400: '#22D3EE', 600: '#0891B2' },
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- Custom Bespoke Stylesheet -->
+    <title>ZeroVault — End-to-End Encrypted File Storage</title>
+    <meta name="description" content="Store and share files with end-to-end encryption. Your files are encrypted in your browser before they ever leave your device.">
     <link rel="stylesheet" href="/static/styles.css">
 </head>
-<body class="text-slate-100 flex flex-col min-h-screen antialiased">
+<body>
 
-    <!-- Top Security Status Bar -->
-    <div class="border-b border-white/5 bg-[#06080D]/90 text-[11px] font-mono py-1 px-4 sm:px-8 flex justify-between items-center text-slate-400">
-        <div class="flex items-center space-x-4">
-            <span class="flex items-center">
-                <span class="beacon-dot bg-emerald-400 mr-2"></span>
-                <span class="text-slate-300 font-semibold tracking-wider">HARDWARE ISOLATION: ACTIVE</span>
-            </span>
-            <span class="hidden md:inline text-slate-600">/</span>
-            <span class="hidden md:inline text-slate-400">ZERO-KNOWLEDGE POSTURE: <span class="text-emerald-400">VERIFIED</span></span>
-        </div>
-        <div class="flex items-center space-x-3 text-slate-500">
-            <span class="hidden sm:inline">AES-256-GCM</span>
-            <span>•</span>
-            <span class="hidden sm:inline">RSA-OAEP 2048</span>
-            <span>•</span>
-            <span>PBKDF2 (100k)</span>
-        </div>
-    </div>
-
-    <!-- Main Navigation Header -->
-    <header class="border-b border-white/10 bg-[#0A0D15]/80 backdrop-blur-xl sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <!-- Header -->
+    <header style="border-bottom: 1px solid var(--border); background: rgba(9,9,11,0.85); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 40;">
+        <div class="container" style="display: flex; align-items: center; justify-content: space-between; height: 60px;">
             
-            <!-- Brand Logo & Identity -->
-            <div class="flex items-center space-x-3.5 cursor-pointer" onclick="app.navigate('vault')">
-                <div class="w-10 h-10 rounded-lg bg-gradient-to-b from-[#1E293B] to-[#0F172A] border border-amber-500/30 flex items-center justify-center shadow-lg shadow-amber-500/5">
-                    <svg class="w-5 h-5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                        <circle cx="12" cy="16" r="1"></circle>
-                    </svg>
-                </div>
-                <div>
-                    <div class="flex items-center space-x-2">
-                        <span class="font-display text-xl font-bold tracking-tight text-white">ZeroVault</span>
-                        <span class="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">Client-Isolated</span>
-                    </div>
-                    <p class="text-[11px] font-tech text-slate-400 tracking-wider">BLIND ENCRYPTED VAULT</p>
-                </div>
+            <a href="/" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit;" onclick="event.preventDefault(); app.navigate('vault');">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                <span style="font-size: 18px; font-weight: 700; letter-spacing: -0.03em;">ZeroVault</span>
+            </a>
+
+            <!-- Nav: Logged-out state -->
+            <div id="auth-nav-buttons" style="display: flex; gap: 8px;">
+                <button onclick="app.showAuthModal('login')" class="btn btn-ghost btn-sm">Log in</button>
+                <button onclick="app.showAuthModal('register')" class="btn btn-primary btn-sm">Sign up</button>
             </div>
 
-            <!-- User Session & Authentication Bar -->
-            <div id="nav-user-area" class="flex items-center space-x-3">
-                <div id="user-pill" class="hidden items-center space-x-3 bg-slate-900/90 border border-emerald-500/30 px-3.5 py-1.5 rounded-lg">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span class="text-xs font-mono text-slate-300 font-medium">KEYPAIR: <span id="nav-username" class="text-emerald-400 font-bold"></span></span>
-                    <button id="btn-logout" class="text-[11px] font-tech text-rose-400 hover:text-rose-300 ml-2 px-1.5 py-0.5 rounded hover:bg-rose-500/10 transition-colors">Lock Vault</button>
-                </div>
-                <div id="auth-nav-buttons" class="flex items-center space-x-2">
-                    <button onclick="app.showAuthModal('login')" class="px-4 py-2 text-xs font-tech font-bold uppercase tracking-wider text-slate-300 hover:text-white rounded-lg border border-white/10 hover:border-white/25 transition-all">Sign In</button>
-                    <button onclick="app.showAuthModal('register')" class="px-4 py-2 text-xs font-tech font-bold uppercase tracking-wider btn-tactile-primary rounded-lg">Create Vault Keypair</button>
-                </div>
+            <!-- Nav: Logged-in state -->
+            <div id="user-pill" class="hidden" style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 13px; color: var(--text-secondary);">
+                    <span style="color: var(--text-primary); font-weight: 600;" id="nav-username"></span>
+                </span>
+                <button id="btn-logout" class="btn btn-ghost btn-sm btn-danger">Log out</button>
             </div>
-
         </div>
     </header>
 
-    <!-- Main Container -->
-    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main>
 
-        <!-- ================================================================ -->
-        <!-- VIEW 1: ANONYMOUS LINK DOWNLOAD VIEW                             -->
-        <!-- ================================================================ -->
-        <section id="view-download" class="hidden max-w-2xl mx-auto space-y-6">
-            <div class="vault-panel technical-corner rounded-xl p-8 border border-white/10 shadow-2xl">
-                
-                <div class="flex items-center space-x-4 mb-6 pb-6 border-b border-white/10">
-                    <div class="w-12 h-12 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center border border-cyan-500/30">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 class="font-display text-xl font-bold text-white">Encrypted Direct Link Decryptor</h2>
-                        <p class="text-xs text-slate-400 font-tech">Client-side Web Crypto AES-256-GCM memory streaming</p>
-                    </div>
-                </div>
-
-                <div id="dl-metadata-box" class="space-y-3 bg-[#060911] rounded-lg p-4 border border-white/5 font-mono text-xs">
-                    <div class="flex justify-between items-center py-1 border-b border-white/5">
-                        <span class="text-slate-500">PAYLOAD ID:</span>
-                        <span id="dl-file-id" class="text-slate-200 truncate max-w-xs">Loading...</span>
-                    </div>
-                    <div class="flex justify-between items-center py-1 border-b border-white/5">
-                        <span class="text-slate-500">ORIGIN OWNER:</span>
-                        <span id="dl-owner" class="text-cyan-400 font-semibold">Loading...</span>
-                    </div>
-                    <div class="flex justify-between items-center py-1 border-b border-white/5">
-                        <span class="text-slate-500">ENCRYPTED SIZE:</span>
-                        <span id="dl-size" class="text-slate-200">Loading...</span>
-                    </div>
-                    <div class="flex justify-between items-center py-1">
-                        <span class="text-slate-500">URL KEY STATUS:</span>
-                        <span id="dl-key-status" class="px-2 py-0.5 rounded text-[11px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">DEK Extracted from Fragment</span>
-                    </div>
-                </div>
-
-                <!-- Password Protection Box -->
-                <div id="dl-password-box" class="hidden mt-4 space-y-2 bg-amber-500/10 p-4 rounded-lg border border-amber-500/30">
-                    <label class="block text-xs font-tech font-bold uppercase tracking-wider text-amber-300 flex items-center">
-                        <svg class="w-4 h-4 mr-1.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                        Sender Protected this File with a Passphrase
-                    </label>
-                    <input type="password" id="dl-file-password" placeholder="Enter file unlock passphrase..." class="w-full px-4 py-2.5 rounded-lg vault-input text-xs font-mono">
-                </div>
-
-                <!-- Download Action Button -->
-                <div class="mt-6 space-y-3">
-                    <button id="btn-execute-download" class="w-full py-3.5 px-6 rounded-lg btn-tactile-cyan text-sm font-bold flex items-center justify-center space-x-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                        </svg>
-                        <span id="dl-button-label">Decrypt & Stream Payload into RAM</span>
-                    </button>
-                    <p class="text-center text-[11px] font-mono text-slate-500">Authenticated decryption occurs in browser memory. Zero plaintext hits the server.</p>
-                </div>
+        <!-- ============================================================ -->
+        <!-- HERO SECTION (visible when logged out)                       -->
+        <!-- ============================================================ -->
+        <section id="hero-section" class="hero">
+            <h1>Your files, encrypted before they leave your browser.</h1>
+            <p>ZeroVault encrypts everything on your device using AES-256 before uploading. We never see your files, passwords, or encryption keys.</p>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button onclick="app.showAuthModal('register')" class="btn btn-primary">Get started — it's free</button>
+                <button onclick="app.showAuthModal('login')" class="btn btn-secondary">Log in</button>
+            </div>
+            <div class="feature-chips">
+                <span class="feature-chip">🔒 End-to-end encrypted</span>
+                <span class="feature-chip">🌐 Works in your browser</span>
+                <span class="feature-chip">🚫 Zero-knowledge architecture</span>
+                <span class="feature-chip">🔑 Client-side key generation</span>
             </div>
         </section>
 
-        <!-- ================================================================ -->
-        <!-- VIEW 2: AUTHENTICATED DASHBOARD                                  -->
-        <!-- ================================================================ -->
-        <section id="view-dashboard" class="space-y-6">
-            
-            <!-- Dashboard Navigation Tabs -->
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-white/10 pb-4">
-                <div class="flex flex-wrap gap-1 bg-[#090C13] p-1 rounded-lg border border-white/10">
-                    <button id="tab-btn-vault" onclick="app.switchTab('vault')" class="px-4 py-2 rounded-md text-xs font-tech font-bold uppercase tracking-wider transition-all bg-amber-500 text-slate-950 shadow-md">
-                        Encrypted Vault
-                    </button>
-                    <button id="tab-btn-upload" onclick="app.switchTab('upload')" class="px-4 py-2 rounded-md text-xs font-tech font-bold uppercase tracking-wider transition-all text-slate-400 hover:text-white">
-                        Upload & Encrypt
-                    </button>
-                    <button id="tab-btn-shared" onclick="app.switchTab('shared')" class="px-4 py-2 rounded-md text-xs font-tech font-bold uppercase tracking-wider transition-all text-slate-400 hover:text-white flex items-center space-x-1.5">
-                        <span>Shared With Me</span>
-                        <span id="shared-count-badge" class="hidden px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-mono">0</span>
-                    </button>
-                    <button id="tab-btn-manual" onclick="app.switchTab('manual')" class="px-4 py-2 rounded-md text-xs font-tech font-bold uppercase tracking-wider transition-all text-slate-400 hover:text-white">
-                        Manual Tool
-                    </button>
-                </div>
-
-                <!-- Vault Telemetry Seal -->
-                <div class="hidden sm:flex items-center space-x-2 text-[11px] font-mono text-slate-400 bg-slate-900/60 px-3 py-1.5 rounded-lg border border-white/5">
-                    <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
-                    <span>ENGINE: WebCrypto Subtle</span>
-                </div>
-            </div>
-
-            <!-- TAB 1: VAULT CONTENT -->
-            <div id="tab-content-vault" class="space-y-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h2 class="font-display text-xl font-bold text-white tracking-tight">Your Blind Vault Archive</h2>
-                        <p class="text-xs text-slate-400 font-tech">Payloads sealed with unique 256-bit AES DEKs and wrapped with your RSA keypair</p>
-                    </div>
-                    <button onclick="app.refreshVault()" class="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-colors border border-white/5" title="Refresh Vault Records">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                    </button>
-                </div>
-
-                <!-- Vault File Table -->
-                <div class="vault-panel technical-corner rounded-xl overflow-hidden border border-white/10">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs text-slate-300">
-                            <thead class="bg-[#090C14] text-[11px] uppercase tracking-wider text-slate-400 border-b border-white/10 font-mono">
-                                <tr>
-                                    <th class="px-5 py-3.5 font-semibold">Ciphertext / Decrypted Name</th>
-                                    <th class="px-5 py-3.5 font-semibold">Size</th>
-                                    <th class="px-5 py-3.5 font-semibold">Timestamp</th>
-                                    <th class="px-5 py-3.5 font-semibold">Protection</th>
-                                    <th class="px-5 py-3.5 font-semibold">Recipients</th>
-                                    <th class="px-5 py-3.5 text-right font-semibold">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="vault-table-body" class="divide-y divide-white/5 font-sans">
-                                <tr>
-                                    <td colspan="6" class="px-6 py-12 text-center text-slate-500 font-mono">
-                                        <div class="flex flex-col items-center justify-center space-y-2">
-                                            <svg class="w-6 h-6 text-slate-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
-                                            <span class="text-xs">Querying vault index...</span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TAB 2: UPLOAD & ENCRYPT -->
-            <div id="tab-content-upload" class="hidden space-y-5 max-w-3xl mx-auto">
-                <div class="text-center space-y-1">
-                    <h2 class="font-display text-2xl font-bold text-white tracking-tight">Client-Side File Encryptor</h2>
-                    <p class="text-xs text-slate-400 font-tech">Generates fresh 256-bit AES-GCM DEK & 12-byte IV before transmitting blind blob</p>
-                </div>
-
-                <!-- Dropzone -->
-                <div id="drop-zone" class="vault-dropzone technical-corner rounded-2xl p-8 text-center cursor-pointer flex flex-col items-center justify-center space-y-3">
-                    <input type="file" id="file-input" class="hidden">
-                    <div class="w-14 h-14 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
-                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+        <!-- ============================================================ -->
+        <!-- ANONYMOUS DOWNLOAD VIEW                                      -->
+        <!-- ============================================================ -->
+        <section id="view-download" class="hidden container" style="max-width: 560px; padding-top: 48px; padding-bottom: 48px;">
+            <div class="card" style="padding: 32px;">
+                <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 24px;">
+                    <div style="width: 44px; height: 44px; border-radius: 10px; background: var(--accent-muted); display: flex; align-items: center; justify-content: center;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
                         </svg>
                     </div>
                     <div>
-                        <p class="text-sm font-tech font-bold text-slate-200">Drag and drop file to seal, or <span class="text-amber-400 underline">select file</span></p>
-                        <p class="text-[11px] font-mono text-slate-500 mt-1">Authenticated AES-256-GCM memory streaming</p>
-                    </div>
-                    <div id="selected-file-badge" class="hidden px-3.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/30 text-xs font-mono flex items-center space-x-2">
-                        <span id="selected-file-name">filename.txt</span>
-                        <span id="selected-file-size" class="text-slate-400 text-[11px]"></span>
+                        <h2 style="font-size: 18px; font-weight: 700;">Someone shared a file with you</h2>
+                        <p style="font-size: 13px; color: var(--text-muted);">This file will be decrypted in your browser. Nothing is sent to the server.</p>
                     </div>
                 </div>
 
-                <!-- Sharing Configuration -->
-                <div class="vault-panel technical-corner rounded-xl p-5 border border-white/10 space-y-4">
-                    <h3 class="text-xs font-tech font-bold uppercase tracking-wider text-slate-300">1. Key Distribution Mode</h3>
-                    
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <label class="relative flex flex-col p-3.5 rounded-lg border border-amber-500/40 bg-amber-500/5 cursor-pointer has-[:checked]:border-amber-400 has-[:checked]:bg-amber-500/10 transition-all">
-                            <div class="flex items-center justify-between">
-                                <span class="font-tech font-bold text-white text-xs">Direct Anonymous Link</span>
-                                <input type="radio" name="share-mode" value="link" checked class="text-amber-500 focus:ring-amber-400 h-4 w-4 bg-slate-900 border-white/20">
-                            </div>
-                            <span class="text-[11px] text-slate-400 mt-1.5">DEK placed inside URL fragment query (`?key=...`). Key never reaches server.</span>
-                        </label>
+                <div style="display: flex; flex-direction: column; gap: 10px; padding: 16px; background: var(--bg-page); border-radius: var(--radius-sm); font-size: 13px; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span class="text-muted">File ID</span>
+                        <span id="dl-file-id" class="font-mono" style="font-size: 12px; color: var(--text-secondary);">Loading...</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span class="text-muted">Uploaded by</span>
+                        <span id="dl-owner" style="font-weight: 600;">Loading...</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span class="text-muted">Size</span>
+                        <span id="dl-size">Loading...</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span class="text-muted">Encryption key</span>
+                        <span id="dl-key-status" class="badge badge-green">✓ Included in link</span>
+                    </div>
+                </div>
 
-                        <label class="relative flex flex-col p-3.5 rounded-lg border border-white/10 bg-slate-900/40 cursor-pointer has-[:checked]:border-amber-400 has-[:checked]:bg-amber-500/10 transition-all">
-                            <div class="flex items-center justify-between">
-                                <span class="font-tech font-bold text-white text-xs">Targeted User Key Exchange</span>
-                                <input type="radio" name="share-mode" value="user" class="text-amber-500 focus:ring-amber-400 h-4 w-4 bg-slate-900 border-white/20">
+                <div id="dl-password-box" class="hidden" style="margin-bottom: 16px;">
+                    <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--text-secondary);">
+                        🔐 This file is password-protected
+                    </label>
+                    <input type="password" id="dl-file-password" placeholder="Enter the file password..." class="input input-mono">
+                </div>
+
+                <button id="btn-execute-download" class="btn btn-primary" style="width: 100%; padding: 12px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <span id="dl-button-label">Download & decrypt</span>
+                </button>
+                <p style="text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 10px;">Decryption happens entirely in your browser.</p>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- DASHBOARD (visible when logged in)                           -->
+        <!-- ============================================================ -->
+        <section id="view-dashboard" class="hidden container" style="padding-top: 32px; padding-bottom: 48px;">
+            
+            <!-- Tab Navigation -->
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; flex-wrap: wrap; gap: 12px;">
+                <div class="tab-bar">
+                    <button id="tab-btn-vault" onclick="app.switchTab('vault')" class="tab-btn tab-btn-active">My files</button>
+                    <button id="tab-btn-upload" onclick="app.switchTab('upload')" class="tab-btn">Upload</button>
+                    <button id="tab-btn-shared" onclick="app.switchTab('shared')" class="tab-btn">
+                        Shared with me
+                        <span id="shared-count-badge" class="hidden badge badge-purple" style="margin-left: 6px; font-size: 10px;">0</span>
+                    </button>
+                    <button id="tab-btn-manual" onclick="app.switchTab('manual')" class="tab-btn">Tools</button>
+                </div>
+            </div>
+
+            <!-- TAB: My Files -->
+            <div id="tab-content-vault">
+                <div class="section-header">
+                    <div>
+                        <h2>My files</h2>
+                        <p>All your encrypted files. Only you can decrypt them.</p>
+                    </div>
+                    <button onclick="app.refreshVault()" class="btn btn-ghost btn-sm" title="Refresh">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                    </button>
+                </div>
+
+                <div class="card" style="overflow: hidden;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Size</th>
+                                <th>Date</th>
+                                <th>Protection</th>
+                                <th>Shared with</th>
+                                <th style="text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vault-table-body">
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 48px 16px; color: var(--text-muted);">
+                                    Sign in to view your files.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB: Upload -->
+            <div id="tab-content-upload" class="hidden" style="max-width: 640px; margin: 0 auto;">
+                <div class="section-header" style="justify-content: center; text-align: center; flex-direction: column; align-items: center;">
+                    <h2>Upload a file</h2>
+                    <p>Your file is encrypted in your browser before being uploaded. We never see the contents.</p>
+                </div>
+
+                <div id="drop-zone" class="dropzone" style="margin-bottom: 24px;">
+                    <input type="file" id="file-input" class="hidden">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" style="margin-bottom: 12px;">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <p style="font-size: 15px; font-weight: 500; color: var(--text-secondary);">
+                        Drop your file here, or <span style="color: var(--accent); cursor: pointer;">browse</span>
+                    </p>
+                    <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Encrypted with AES-256-GCM before upload</p>
+                    <div id="selected-file-badge" class="hidden badge badge-purple" style="margin-top: 12px; font-size: 12px; padding: 6px 14px;">
+                        <span id="selected-file-name">file.txt</span>
+                        <span id="selected-file-size" style="color: var(--text-muted); margin-left: 4px;"></span>
+                    </div>
+                </div>
+
+                <div class="card" style="padding: 24px; margin-bottom: 20px;">
+                    <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 16px;">Sharing options</h3>
+
+                    <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+                        <label style="flex: 1; display: flex; align-items: flex-start; gap: 10px; padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); cursor: pointer; transition: border-color 0.15s;">
+                            <input type="radio" name="share-mode" value="link" checked style="margin-top: 2px; accent-color: var(--accent);">
+                            <div>
+                                <div style="font-size: 13px; font-weight: 600;">Share via link</div>
+                                <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Anyone with the link can decrypt the file.</div>
                             </div>
-                            <span class="text-[11px] text-slate-400 mt-1.5">Fetch recipient's RSA-OAEP public key and wrap the DEK asymmetrically.</span>
+                        </label>
+                        <label style="flex: 1; display: flex; align-items: flex-start; gap: 10px; padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); cursor: pointer; transition: border-color 0.15s;">
+                            <input type="radio" name="share-mode" value="user" style="margin-top: 2px; accent-color: var(--accent);">
+                            <div>
+                                <div style="font-size: 13px; font-weight: 600;">Share with a user</div>
+                                <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Encrypted for a specific ZeroVault user.</div>
+                            </div>
                         </label>
                     </div>
 
-                    <!-- User recipient selector -->
-                    <div id="recipient-selection-box" class="hidden space-y-2 pt-2">
-                        <label class="block text-[11px] font-tech font-semibold text-slate-300">Target Recipient Username</label>
-                        <div class="flex space-x-2">
-                            <input type="text" id="target-recipient-input" placeholder="e.g. bob" class="w-full px-3 py-2 rounded-lg vault-input text-xs font-mono">
-                            <select id="user-dropdown-picker" class="vault-input rounded-lg px-3 text-xs text-slate-300" onchange="document.getElementById('target-recipient-input').value = this.value">
-                                <option value="">Users Directory...</option>
+                    <div id="recipient-selection-box" class="hidden" style="margin-bottom: 16px;">
+                        <label style="font-size: 13px; font-weight: 500; color: var(--text-secondary); display: block; margin-bottom: 6px;">Recipient username</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="target-recipient-input" placeholder="e.g. bob" class="input input-mono" style="flex: 1;">
+                            <select id="user-dropdown-picker" class="input" style="width: auto; min-width: 120px;" onchange="document.getElementById('target-recipient-input').value = this.value">
+                                <option value="">Pick user...</option>
                             </select>
                         </div>
                     </div>
 
-                    <!-- Optional Extra Layer: Password Protection -->
-                    <div class="pt-3 border-t border-white/5 space-y-2">
-                        <h4 class="text-xs font-tech font-bold text-slate-200">2. Additional Password Shield (Optional)</h4>
-                        <p class="text-[11px] text-slate-400">Wraps DEK with secondary PBKDF2-derived key. Recipient must enter this password to unlock.</p>
-                        <input type="password" id="upload-file-password" placeholder="Leave empty for standard, or enter passphrase..." class="w-full px-3 py-2 rounded-lg vault-input text-xs font-mono">
+                    <div style="border-top: 1px solid var(--border); padding-top: 16px;">
+                        <label style="font-size: 13px; font-weight: 500; color: var(--text-secondary); display: block; margin-bottom: 6px;">
+                            File password <span style="color: var(--text-muted); font-weight: 400;">(optional — adds an extra layer)</span>
+                        </label>
+                        <input type="password" id="upload-file-password" placeholder="Leave empty if not needed" class="input">
                     </div>
                 </div>
 
-                <!-- Submit Button -->
-                <button id="btn-start-encrypt" disabled class="w-full py-3.5 px-6 rounded-xl bg-slate-800 text-slate-500 font-tech font-bold text-sm shadow-xl flex items-center justify-center space-x-2 transition-all cursor-not-allowed">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                    <span>Select File to Seal & Transmit</span>
+                <button id="btn-start-encrypt" disabled class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 15px; opacity: 0.4; cursor: not-allowed;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <span>Select a file first</span>
                 </button>
             </div>
 
-            <!-- TAB 3: SHARED WITH ME -->
-            <div id="tab-content-shared" class="hidden space-y-4">
-                <div>
-                    <h2 class="font-display text-xl font-bold text-white tracking-tight">Files Shared With Your Public Key</h2>
-                    <p class="text-xs text-slate-400 font-tech">Wrapped with your RSA-OAEP 2048-bit public key. Unlocked locally with your private key in RAM.</p>
+            <!-- TAB: Shared with me -->
+            <div id="tab-content-shared" class="hidden">
+                <div class="section-header">
+                    <div>
+                        <h2>Shared with me</h2>
+                        <p>Files other users have shared with you.</p>
+                    </div>
                 </div>
 
-                <div class="vault-panel technical-corner rounded-xl overflow-hidden border border-white/10">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs text-slate-300">
-                            <thead class="bg-[#090C14] text-[11px] uppercase tracking-wider text-slate-400 border-b border-white/10 font-mono">
-                                <tr>
-                                    <th class="px-5 py-3.5 font-semibold">File / Ciphertext ID</th>
-                                    <th class="px-5 py-3.5 font-semibold">Shared By</th>
-                                    <th class="px-5 py-3.5 font-semibold">Size</th>
-                                    <th class="px-5 py-3.5 font-semibold">Protection</th>
-                                    <th class="px-5 py-3.5 font-semibold">Date Received</th>
-                                    <th class="px-5 py-3.5 text-right font-semibold">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="shared-table-body" class="divide-y divide-white/5 font-sans">
-                                <tr>
-                                    <td colspan="6" class="px-6 py-8 text-center text-slate-500 font-mono">No shared records found.</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                <div class="card" style="overflow: hidden;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>From</th>
+                                <th>Size</th>
+                                <th>Protection</th>
+                                <th>Date</th>
+                                <th style="text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="shared-table-body">
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 40px 16px; color: var(--text-muted);">No files shared with you yet.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB: Tools (Manual Decrypt) -->
+            <div id="tab-content-manual" class="hidden" style="max-width: 560px; margin: 0 auto;">
+                <div class="section-header" style="justify-content: center; text-align: center; flex-direction: column; align-items: center;">
+                    <h2>Manual decryption</h2>
+                    <p>Decrypt a file using a raw key or password, outside of the vault.</p>
+                </div>
+
+                <div class="card" style="padding: 24px;">
+                    <div style="display: flex; flex-direction: column; gap: 14px;">
+                        <div>
+                            <label style="font-size: 13px; font-weight: 500; color: var(--text-secondary); display: block; margin-bottom: 6px;">Encrypted file</label>
+                            <input type="file" id="manual-file-input" class="input" style="padding: 8px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 13px; font-weight: 500; color: var(--text-secondary); display: block; margin-bottom: 6px;">Decryption key or password</label>
+                            <input type="text" id="manual-key-input" placeholder="Paste the key or enter the password..." class="input input-mono">
+                        </div>
+                        <div>
+                            <label style="font-size: 13px; font-weight: 500; color: var(--text-secondary); display: block; margin-bottom: 6px;">IV (initialization vector)</label>
+                            <input type="text" id="manual-iv-input" placeholder="Base64-encoded IV" class="input input-mono">
+                        </div>
+                        <button id="btn-manual-decrypt" class="btn btn-primary" style="width: 100%; padding: 12px;">
+                            Decrypt file
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <!-- TAB 4: MANUAL DECRYPTION TOOL -->
-            <div id="tab-content-manual" class="hidden space-y-4 max-w-3xl mx-auto">
-                <div class="text-center space-y-1">
-                    <h2 class="font-display text-2xl font-bold text-white tracking-tight">Manual Ciphertext Decryptor</h2>
-                    <p class="text-xs text-slate-400 font-tech">Decrypt raw `.enc` blobs directly using raw DEK or file password</p>
-                </div>
-
-                <div class="vault-panel technical-corner rounded-xl p-5 border border-white/10 space-y-3.5">
-                    <div>
-                        <label class="block text-[11px] font-tech font-semibold text-slate-300 mb-1">Encrypted Ciphertext File (.enc / .bin)</label>
-                        <input type="file" id="manual-file-input" class="w-full px-3 py-2 rounded-lg vault-input text-xs font-mono">
+            <!-- Activity Log (collapsible) -->
+            <details style="margin-top: 32px;">
+                <summary style="cursor: pointer; font-size: 13px; color: var(--text-muted); user-select: none; padding: 4px 0;">
+                    Activity log
+                </summary>
+                <div class="activity-log" style="margin-top: 8px;">
+                    <div class="activity-log-header">
+                        <span style="font-size: 11px; color: var(--text-muted);">Recent activity</span>
+                        <button onclick="document.getElementById('terminal-log').innerHTML=''" class="btn btn-ghost" style="font-size: 11px; padding: 2px 8px;">Clear</button>
                     </div>
-                    <div>
-                        <label class="block text-[11px] font-tech font-semibold text-slate-300 mb-1">Decryption Key (Base64 / Base64URL DEK) OR Passphrase</label>
-                        <input type="text" id="manual-key-input" placeholder="Paste raw DEK or enter password..." class="w-full px-3 py-2.5 rounded-lg vault-input text-xs font-mono">
+                    <div id="terminal-log" class="activity-log-body">
+                        <div class="log-crypto">[init] Crypto engine ready</div>
                     </div>
-                    <div>
-                        <label class="block text-[11px] font-tech font-semibold text-slate-300 mb-1">12-Byte IV (Base64)</label>
-                        <input type="text" id="manual-iv-input" placeholder="Paste Base64 IV..." class="w-full px-3 py-2 rounded-lg vault-input text-xs font-mono">
-                    </div>
-                    <button id="btn-manual-decrypt" class="w-full py-3 px-6 rounded-lg btn-tactile-cyan text-xs font-bold font-tech uppercase tracking-wider">
-                        Execute Memory Decryption
-                    </button>
                 </div>
-            </div>
-
-            <!-- Cryptographic Live Audit Log -->
-            <div class="terminal-container rounded-xl overflow-hidden border border-white/10">
-                <div class="terminal-header px-4 py-2 flex items-center justify-between text-xs">
-                    <div class="flex items-center space-x-2">
-                        <span class="beacon-dot bg-cyan-400"></span>
-                        <span class="font-mono text-[11px] text-slate-300 tracking-wider">CRYPTOGRAPHIC TELEMETRY LOG</span>
-                    </div>
-                    <button onclick="document.getElementById('terminal-log').innerHTML = ''" class="text-[10px] font-mono text-slate-500 hover:text-slate-300">CLEAR</button>
-                </div>
-                <div id="terminal-log" class="p-3 h-28 overflow-y-auto text-[11px] space-y-1">
-                    <div class="terminal-line-crypto">[INIT] WebCrypto subtle engine ready. Client memory space isolated.</div>
-                </div>
-            </div>
+            </details>
 
         </section>
     </main>
 
     <!-- ================================================================ -->
-    <!-- MODAL: AUTHENTICATION (Sign In / Register)                       -->
+    <!-- MODAL: Auth (Login / Register)                                   -->
     <!-- ================================================================ -->
-    <div id="auth-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="vault-panel technical-corner rounded-2xl max-w-md w-full p-6 sm:p-8 border border-white/15 shadow-2xl relative">
-            <button onclick="app.closeAuthModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-
-            <div class="text-center space-y-1.5 mb-6">
-                <div class="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center mx-auto border border-amber-500/25">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                </div>
-                <h3 id="auth-modal-title" class="font-display text-xl font-bold text-white">Unlock ZeroVault Session</h3>
-                <p id="auth-modal-desc" class="text-xs text-slate-400 font-tech">PBKDF2-SHA256 will derive your auth hash and decrypt your local keypair in RAM.</p>
+    <div id="auth-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h3 id="auth-modal-title" style="font-size: 20px; font-weight: 700;">Log in</h3>
+                <button onclick="app.closeAuthModal()" class="btn btn-ghost" style="padding: 4px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
             </div>
 
-            <form id="auth-form" class="space-y-4">
+            <p id="auth-modal-desc" style="font-size: 13px; color: var(--text-muted); margin-bottom: 24px;">
+                Your password never leaves your device — it's used locally to derive your encryption keys.
+            </p>
+
+            <form id="auth-form" style="display: flex; flex-direction: column; gap: 16px;">
                 <div>
-                    <label class="block text-[11px] font-tech font-bold uppercase tracking-wider text-slate-300 mb-1">Vault Username</label>
-                    <input type="text" id="auth-username" required class="w-full px-3.5 py-2.5 rounded-lg vault-input text-xs font-mono" placeholder="e.g. alice">
+                    <label style="font-size: 13px; font-weight: 500; color: var(--text-secondary); display: block; margin-bottom: 6px;">Username</label>
+                    <input type="text" id="auth-username" required class="input" placeholder="Choose a username">
                 </div>
                 <div>
-                    <label class="block text-[11px] font-tech font-bold uppercase tracking-wider text-slate-300 mb-1">Passphrase (Never Sent to Server)</label>
-                    <input type="password" id="auth-password" required class="w-full px-3.5 py-2.5 rounded-lg vault-input text-xs font-mono" placeholder="••••••••••••••••">
+                    <label style="font-size: 13px; font-weight: 500; color: var(--text-secondary); display: block; margin-bottom: 6px;">Password</label>
+                    <input type="password" id="auth-password" required class="input" placeholder="Enter your password">
                 </div>
 
-                <div id="auth-status-box" class="hidden p-2.5 rounded-lg bg-slate-900 border border-white/10 font-mono text-[11px] text-amber-300 space-y-1">
-                    <div class="flex items-center space-x-2">
-                        <svg class="w-3.5 h-3.5 animate-spin text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
-                        <span id="auth-status-text">Executing PBKDF2 (100,000 iterations)...</span>
-                    </div>
+                <div id="auth-status-box" class="hidden" style="padding: 10px 14px; background: var(--accent-glow); border: 1px solid rgba(139,92,246,0.2); border-radius: var(--radius-sm);">
+                    <span id="auth-status-text" style="font-size: 12px; color: #C4B5FD;">Deriving encryption keys...</span>
                 </div>
 
-                <button type="submit" id="btn-auth-submit" class="w-full py-3 px-6 rounded-lg btn-tactile-primary text-xs font-bold font-tech uppercase tracking-wider">
-                    Authenticate & Unlock RAM Key
+                <button type="submit" id="btn-auth-submit" class="btn btn-primary" style="width: 100%; padding: 12px;">
+                    Log in
                 </button>
             </form>
 
-            <div class="mt-4 text-center">
-                <button id="btn-toggle-auth-mode" class="text-xs font-tech text-slate-400 hover:text-amber-400 transition-colors">
-                    Don't have an account? Create New Keypair
+            <div style="text-align: center; margin-top: 16px;">
+                <button id="btn-toggle-auth-mode" class="btn btn-ghost" style="font-size: 13px; color: var(--text-muted);">
+                    Don't have an account? Sign up
                 </button>
             </div>
         </div>
     </div>
 
     <!-- ================================================================ -->
-    <!-- MODAL: SHARE LINK READY                                         -->
+    <!-- MODAL: Share Link                                                -->
     <!-- ================================================================ -->
-    <div id="link-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="vault-panel technical-corner rounded-2xl max-w-lg w-full p-6 sm:p-8 border border-white/15 shadow-2xl relative space-y-4">
-            <div class="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/30">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+    <div id="link-modal" class="modal-overlay hidden">
+        <div class="modal-card" style="text-align: center;">
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(34,197,94,0.12); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
             </div>
 
-            <div class="text-center space-y-1">
-                <h3 id="share-modal-title" class="font-display text-lg font-bold text-white">Direct Decryption Link Generated</h3>
-                <p id="share-modal-desc" class="text-xs text-slate-400 font-tech">The recipient's browser will decrypt locally. The DEK key is in the URL hash query and is invisible to the server.</p>
+            <h3 id="share-modal-title" style="font-size: 18px; font-weight: 700; margin-bottom: 6px;">Link created</h3>
+            <p id="share-modal-desc" style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">
+                Anyone with this link can download and decrypt the file. The decryption key is in the URL and never reaches the server.
+            </p>
+
+            <div style="display: flex; gap: 8px; margin-bottom: 20px;">
+                <input type="text" id="share-link-input" readonly class="input input-mono" style="font-size: 12px; background: var(--bg-page);">
+                <button onclick="app.copyShareLink()" class="btn btn-primary btn-sm" style="white-space: nowrap;">Copy link</button>
             </div>
 
-            <div class="bg-[#05070B] p-2.5 rounded-lg border border-white/10 flex items-center justify-between space-x-2">
-                <input type="text" id="share-link-input" readonly class="bg-transparent text-xs font-mono text-emerald-300 w-full outline-none select-all">
-                <button onclick="app.copyShareLink()" class="px-3 py-1 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold font-tech shrink-0">Copy</button>
-            </div>
-
-            <div class="text-center pt-2">
-                <button onclick="document.getElementById('link-modal').classList.add('hidden')" class="px-5 py-1.5 rounded-lg btn-tactile-secondary text-xs font-tech font-bold uppercase tracking-wider">Done</button>
-            </div>
+            <button onclick="document.getElementById('link-modal').classList.add('hidden')" class="btn btn-ghost">Done</button>
         </div>
     </div>
 
     <!-- ================================================================ -->
-    <!-- MODAL: VAULT FILE SHARING                                       -->
+    <!-- MODAL: Vault File Sharing                                       -->
     <!-- ================================================================ -->
-    <div id="vault-share-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="vault-panel technical-corner rounded-2xl max-w-lg w-full p-6 sm:p-8 border border-white/15 shadow-2xl relative space-y-4">
-            <button onclick="document.getElementById('vault-share-modal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
+    <div id="vault-share-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <h3 style="font-size: 18px; font-weight: 700;">Share file</h3>
+                <button onclick="document.getElementById('vault-share-modal').classList.add('hidden')" class="btn btn-ghost" style="padding: 4px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <p id="vault-share-filename" style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px; font-family: 'JetBrains Mono', monospace;">file.txt</p>
 
-            <div class="text-center space-y-1">
-                <h3 class="font-display text-lg font-bold text-white">Share Vault Payload</h3>
-                <p id="vault-share-filename" class="text-xs text-slate-400 font-mono">Loading...</p>
+            <!-- Option 1: Link -->
+            <div style="padding: 16px; background: var(--bg-page); border-radius: var(--radius-sm); margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span style="font-size: 14px; font-weight: 600;">Share via link</span>
+                    <button id="btn-gen-vault-link" class="btn btn-primary btn-sm">Generate link</button>
+                </div>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Creates a direct download link with the decryption key embedded.</p>
+                <div id="vault-link-result-box" class="hidden" style="display: flex; gap: 6px;">
+                    <input type="text" id="vault-share-link-input" readonly class="input input-mono" style="font-size: 11px;">
+                    <button onclick="app.copyVaultShareLink()" class="btn btn-primary btn-sm">Copy</button>
+                </div>
             </div>
 
-            <!-- Option 1: Anonymous Link -->
-            <div class="bg-[#060912] p-3.5 rounded-lg border border-white/5 space-y-2.5">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-tech font-bold uppercase tracking-wider text-amber-400">1. Generate Shareable Direct Link</span>
-                    <button id="btn-gen-vault-link" class="px-2.5 py-1 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold font-tech">Generate Link</button>
-                </div>
-                <p class="text-[11px] text-slate-400">Unwraps DEK in RAM and packages it into an anonymous URL query.</p>
-                <div id="vault-link-result-box" class="hidden flex items-center space-x-2">
-                    <input type="text" id="vault-share-link-input" readonly class="bg-black px-2.5 py-1.5 rounded text-xs font-mono text-emerald-300 w-full outline-none select-all border border-white/10">
-                    <button onclick="app.copyVaultShareLink()" class="px-3 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-tech font-bold shrink-0">Copy</button>
-                </div>
-            </div>
-
-            <!-- Option 2: Share with Registered User -->
-            <div class="bg-[#060912] p-3.5 rounded-lg border border-white/5 space-y-2.5">
-                <span class="text-xs font-tech font-bold uppercase tracking-wider text-cyan-400">2. Share via User Public Key</span>
-                <p class="text-[11px] text-slate-400">Wraps DEK with recipient's RSA public key. Appears directly in their "Shared With Me" tab.</p>
-                <div class="flex space-x-2">
-                    <input type="text" id="vault-share-recipient-input" placeholder="e.g. bob" class="w-full px-2.5 py-1.5 rounded-lg vault-input text-xs font-mono">
-                    <select id="vault-share-user-dropdown" class="vault-input rounded-lg px-2 text-xs text-slate-300" onchange="document.getElementById('vault-share-recipient-input').value = this.value">
-                        <option value="">Users...</option>
+            <!-- Option 2: User -->
+            <div style="padding: 16px; background: var(--bg-page); border-radius: var(--radius-sm);">
+                <span style="font-size: 14px; font-weight: 600; display: block; margin-bottom: 8px;">Share with a user</span>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">The file will appear in their "Shared with me" tab.</p>
+                <div style="display: flex; gap: 6px;">
+                    <input type="text" id="vault-share-recipient-input" placeholder="Username" class="input input-mono" style="flex: 1;">
+                    <select id="vault-share-user-dropdown" class="input" style="width: auto; min-width: 100px;" onchange="document.getElementById('vault-share-recipient-input').value = this.value">
+                        <option value="">Pick...</option>
                     </select>
-                    <button id="btn-vault-share-user" class="px-3 py-1.5 rounded-lg btn-tactile-cyan text-xs font-tech font-bold shrink-0">Share</button>
+                    <button id="btn-vault-share-user" class="btn btn-primary btn-sm">Share</button>
                 </div>
             </div>
         </div>
