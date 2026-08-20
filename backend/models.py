@@ -7,7 +7,7 @@ Guarantees zero-knowledge compliance:
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
@@ -39,7 +39,7 @@ class User(Base):
     # Server cannot decrypt this because it never possesses the KEK or password
     encrypted_private_key = Column(Text, nullable=False)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     files = relationship("FileRecord", back_populates="owner", cascade="all, delete-orphan")
@@ -64,7 +64,7 @@ class FileRecord(Base):
     # Encrypted file size in bytes
     file_size = Column(Integer, nullable=False)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     owner = relationship("User", back_populates="files")
@@ -87,7 +87,7 @@ class SharedKey(Base):
     # Optional label / target username cached for fast UI listing
     recipient_username = Column(String(50), nullable=True)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     file = relationship("FileRecord", back_populates="shared_keys")

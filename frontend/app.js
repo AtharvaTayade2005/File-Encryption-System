@@ -567,7 +567,7 @@ class ZeroVaultApp {
             this.log(`[VAULT] File successfully stored with ID: ${result.file_id}`, "success");
 
             // Always display the share link option so user has both capabilities!
-            const shareUrl = `${window.location.origin}/#/download/${result.file_id}#key=${rawDekBase64Url}`;
+            const shareUrl = `${window.location.origin}/#/download/${result.file_id}?key=${rawDekBase64Url}`;
             document.getElementById("share-link-input").value = shareUrl;
             
             if (shareMode === "user") {
@@ -581,9 +581,9 @@ class ZeroVaultApp {
 
             // Reset upload UI and refresh vault
             this.selectedFile = null;
-            document.getElementById("upload-file-password").value = "";
+            const pwInput = document.getElementById("upload-file-password");
+            if (pwInput) pwInput.value = "";
             document.getElementById("selected-file-badge")?.classList.add("hidden");
-            this.handleFileSelectedReset();
             this.switchTab("vault");
 
         } catch (err) {
@@ -807,7 +807,7 @@ class ZeroVaultApp {
             const rawDek = await this.crypto.unwrapKeyWithPrivateKey(this.activeShareFile.wrapped_key, this.unlockedPrivateKey);
             const rawDekBase64Url = CryptoEngine.bufferToBase64Url(rawDek);
 
-            const shareUrl = `${window.location.origin}/#/download/${this.activeShareFile.file_id}#key=${rawDekBase64Url}`;
+            const shareUrl = `${window.location.origin}/#/download/${this.activeShareFile.file_id}?key=${rawDekBase64Url}`;
             
             const linkInput = document.getElementById("vault-share-link-input");
             const resultBox = document.getElementById("vault-link-result-box");
@@ -965,8 +965,8 @@ class ZeroVaultApp {
         const hash = window.location.hash;
         if (!hash.startsWith("#/download/")) return;
 
-        // Parse format: #/download/<file_id>#key=<rawDekBase64Url>
-        const parts = hash.split("#key=");
+        // Parse format: #/download/<file_id>?key=<rawDekBase64Url>
+        const parts = hash.split("?key=");
         const fileId = parts[0].replace("#/download/", "").trim();
         const rawDekBase64Url = parts[1] ? parts[1].trim() : null;
 
